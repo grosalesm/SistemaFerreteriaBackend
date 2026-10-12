@@ -1,0 +1,21 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    # El servidor no se registra a sí mismo ni descarga el registro
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  server:
+    # En desarrollo: desactivar autopreservación y limpiar instancias caídas rápido
+    enable-self-preservation: false
+    eviction-interval-timer-in-ms: 10000
+    wait-time-in-ms-when-sync-empty: 0

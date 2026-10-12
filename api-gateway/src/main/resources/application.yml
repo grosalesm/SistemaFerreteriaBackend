@@ -1,0 +1,149 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: 2000
+        response-timeout: 5s
+      default-filters:
+        # Evita cabeceras CORS duplicadas si algún microservicio también las agrega
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - http://localhost:4200
+              - http://localhost:5173
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowed-headers: "*"
+            exposed-headers:
+              - Authorization
+              - Location
+            allow-credentials: true
+            max-age: 3600
+      routes:
+        - id: ms-auth
+          uri: lb://ms-auth
+          predicates:
+            - Path=/api/auth/**,/api/usuarios/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: msAuthCB
+                fallbackUri: forward:/fallback/ms-auth
+
+        - id: ms-clientes
+          uri: lb://ms-clientes
+          predicates:
+            - Path=/api/clientes/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: msClientesCB
+                fallbackUri: forward:/fallback/ms-clientes
+
+        - id: ms-productos
+          uri: lb://ms-productos
+          predicates:
+            - Path=/api/productos/**,/api/categorias/**,/api/almacenes/**,/api/stock/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: msProductosCB
+                fallbackUri: forward:/fallback/ms-productos
+
+        - id: ms-cotizaciones
+          uri: lb://ms-cotizaciones
+          predicates:
+            - Path=/api/cotizaciones/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: msCotizacionesCB
+                fallbackUri: forward:/fallback/ms-cotizaciones
+
+        - id: ms-ventas
+          uri: lb://ms-ventas
+          predicates:
+            - Path=/api/pedidos/**,/api/despachos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: msVentasCB
+                fallbackUri: forward:/fallback/ms-ventas
+
+        - id: ms-notificaciones
+          uri: lb://ms-notificaciones
+          predicates:
+            - Path=/api/notificaciones/**,/api/dashboard/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: msNotificacionesCB
+                fallbackUri: forward:/fallback/ms-notificaciones
+
+        # WebSocket: conexión de larga duración, sin CircuitBreaker (el timeout de 3 s la cortaría)
+        - id: ms-notificaciones-ws
+          uri: lb:ws://ms-notificaciones
+          predicates:
+            - Path=/ws/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+    instances:
+      msAuthCB: { base-config: default }
+      msClientesCB: { base-config: default }
+      msProductosCB: { base-config: default }
+      msCotizacionesCB: { base-config: default }
+      msVentasCB: { base-config: default }
+      msNotificacionesCB: { base-config: default }
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 3s
+        cancel-running-future: true
+    instances:
+      msAuthCB: { base-config: default }
+      msClientesCB: { base-config: default }
+      msProductosCB: { base-config: default }
+      msCotizacionesCB: { base-config: default }
+      msVentasCB: { base-config: default }
+      msNotificacionesCB: { base-config: default }
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
