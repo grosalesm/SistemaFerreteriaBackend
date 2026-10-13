@@ -137,6 +137,10 @@ resilience4j:
       msVentasCB: { base-config: default }
       msNotificacionesCB: { base-config: default }
 
+jwt:
+  # Debe ser la MISMA clave que en ms-auth
+  secret: ${JWT_SECRET:ferreteria-el-constructor-clave-secreta-jwt-2026}
+
 management:
   endpoints:
     web:
