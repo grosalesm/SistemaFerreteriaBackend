@@ -1,0 +1,44 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: ms-auth
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/db_auth
+    username: ${DB_USER:ferreteria}
+    password: ${DB_PASSWORD:ferreteria123}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: false
+  cloud:
+    openfeign:
+      circuitbreaker:
+        # Activa el fallback de los clientes Feign (ClienteClientFallback)
+        enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        # Las respuestas 4xx de ms-clientes son errores del usuario: no abren el circuito
+        ignore-exceptions:
+          - feign.FeignException$FeignClientException
+  timelimiter:
+    configs:
+      default:
+        # Por defecto es 1 s; la primera llamada a ms-clientes puede tardar más
+        timeout-duration: 5s
+
+jwt:
+  # Debe ser la MISMA clave en api-gateway (mínimo 32 caracteres para HS256)
+  secret: ${JWT_SECRET:ferreteria-el-constructor-clave-secreta-jwt-2026}
