@@ -140,6 +140,25 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         if (pathMatcher.match("/api/cotizaciones/**", path)) {
             return rolEn(rol, "ADMIN", "VENDEDOR", "CLIENTE");
         }
+        if (pathMatcher.match("/api/despachos/**", path)) {
+            return rolEn(rol, "ADMIN", "ALMACENERO");
+        }
+        if (pathMatcher.match("/api/pedidos/**", path)) {
+            if (metodo == HttpMethod.GET) {
+                return rolEn(rol, "ADMIN", "VENDEDOR", "CAJERO", "ALMACENERO", "CLIENTE");
+            }
+            if (pathMatcher.match("/api/pedidos/*/pago", path) || pathMatcher.match("/api/pedidos/*/comprobante", path)) {
+                return rolEn(rol, "ADMIN", "CAJERO");
+            }
+            if (pathMatcher.match("/api/pedidos/*/anular", path)) {
+                return rolEn(rol, "ADMIN");
+            }
+            if (pathMatcher.match("/api/pedidos/*/preparar", path) || pathMatcher.match("/api/pedidos/*/checklist", path)
+                    || pathMatcher.match("/api/pedidos/*/despachar", path) || pathMatcher.match("/api/pedidos/*/entregar", path)) {
+                return rolEn(rol, "ADMIN", "ALMACENERO");
+            }
+            return false;
+        }
         boolean esCatalogo = pathMatcher.match("/api/productos/**", path)
                 || pathMatcher.match("/api/categorias/**", path);
         if (esCatalogo || pathMatcher.match("/api/almacenes/**", path)) {
