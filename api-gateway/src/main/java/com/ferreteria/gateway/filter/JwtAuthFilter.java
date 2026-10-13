@@ -137,6 +137,9 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             }
             return rolEn(rol, "ADMIN", "ALMACENERO");
         }
+        if (pathMatcher.match("/api/cotizaciones/**", path)) {
+            return rolEn(rol, "ADMIN", "VENDEDOR", "CLIENTE");
+        }
         boolean esCatalogo = pathMatcher.match("/api/productos/**", path)
                 || pathMatcher.match("/api/categorias/**", path);
         if (esCatalogo || pathMatcher.match("/api/almacenes/**", path)) {
