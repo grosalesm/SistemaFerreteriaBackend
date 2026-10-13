@@ -140,6 +140,12 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         if (pathMatcher.match("/api/cotizaciones/**", path)) {
             return rolEn(rol, "ADMIN", "VENDEDOR", "CLIENTE");
         }
+        if (pathMatcher.match("/api/dashboard/**", path)) {
+            return rolEn(rol, "ADMIN");
+        }
+        if (pathMatcher.match("/api/notificaciones/**", path)) {
+            return true;
+        }
         if (pathMatcher.match("/api/despachos/**", path)) {
             return rolEn(rol, "ADMIN", "ALMACENERO");
         }

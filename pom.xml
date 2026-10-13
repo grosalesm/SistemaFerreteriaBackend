@@ -20,6 +20,7 @@
         <module>ms-productos</module>
         <module>ms-cotizaciones</module>
         <module>ms-ventas</module>
+        <module>ms-notificaciones</module>
     </modules>
 
     <properties>

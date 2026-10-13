@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prueba de avisos</title>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; color: #1f2933; background: #f7f8fa; }
+        h1 { font-size: 1.4rem; }
+        fieldset { border: 1px solid #d0d5dd; border-radius: 8px; background: #fff; padding: 12px 16px; }
+        label { display: block; margin: 8px 0 4px; font-weight: 600; font-size: .9rem; }
+        input, select, button { font: inherit; padding: 6px 8px; }
+        input[type=text] { width: 100%; box-sizing: border-box; }
+        button { margin-top: 12px; cursor: pointer; }
+        #estado { margin: 12px 0; font-weight: 600; }
+        ul { list-style: none; padding: 0; }
+        li { background: #fff; border: 1px solid #d0d5dd; border-left: 4px solid #2563eb; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px; }
+        li small { color: #667085; }
+    </style>
+</head>
+<body>
+<h1>Prueba de avisos en tiempo real</h1>
+<fieldset>
+    <label for="token">Token JWT</label>
+    <input type="text" id="token" placeholder="Pega aquí el token del login">
+
+    <label for="tipo">Suscribirse a</label>
+    <select id="tipo">
+        <option value="rol">Un rol</option>
+        <option value="cliente">Un cliente</option>
+    </select>
+    <select id="rol">
+        <option>ADMIN</option>
+        <option>VENDEDOR</option>
+        <option>CAJERO</option>
+        <option>ALMACENERO</option>
+    </select>
+    <input type="number" id="clienteId" placeholder="clienteId" style="display:none">
+
+    <br>
+    <button id="conectar">Conectar</button>
+    <button id="desconectar" disabled>Desconectar</button>
+</fieldset>
+
+<div id="estado">Desconectado</div>
+<ul id="avisos"></ul>
+
+<script>
+    const $ = id => document.getElementById(id);
+    let cliente = null;
+
+    $('tipo').onchange = () => {
+        const porRol = $('tipo').value === 'rol';
+        $('rol').style.display = porRol ? '' : 'none';
+        $('clienteId').style.display = porRol ? 'none' : '';
+    };
+
+    $('conectar').onclick = () => {
+        const token = $('token').value.trim();
+        const topico = $('tipo').value === 'rol'
+            ? '/topic/rol/' + $('rol').value
+            : '/topic/cliente/' + $('clienteId').value;
+
+        cliente = new StompJs.Client({
+            brokerURL: 'ws://localhost:8080/ws?token=' + encodeURIComponent(token),
+            reconnectDelay: 0,
+            onConnect: () => {
+                $('estado').textContent = 'Conectado y suscrito a ' + topico;
+                cliente.subscribe(topico, mensaje => mostrar(JSON.parse(mensaje.body)));
+            },
+            onStompError: frame => { $('estado').textContent = 'Error: ' + frame.headers.message; },
+            onWebSocketClose: () => {
+                if (!$('estado').textContent.startsWith('Error')) {
+                    $('estado').textContent = 'Desconectado';
+                }
+                $('conectar').disabled = false;
+                $('desconectar').disabled = true;
+            }
+        });
+        cliente.activate();
+        $('estado').textContent = 'Conectando...';
+        $('conectar').disabled = true;
+        $('desconectar').disabled = false;
+    };
+
+    $('desconectar').onclick = () => cliente && cliente.deactivate();
+
+    function mostrar(aviso) {
+        const li = document.createElement('li');
+        const titulo = document.createElement('strong');
+        titulo.textContent = aviso.titulo;
+        const texto = document.createElement('div');
+        texto.textContent = aviso.mensaje;
+        const pie = document.createElement('small');
+        pie.textContent = aviso.tipo + ' · ' + new Date(aviso.fecha).toLocaleTimeString();
+        li.append(titulo, texto, pie);
+        $('avisos').prepend(li);
+    }
+</script>
+</body>
+</html>
