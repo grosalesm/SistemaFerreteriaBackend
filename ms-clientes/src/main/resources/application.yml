@@ -1,0 +1,23 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ms-clientes
+  datasource:
+    # El contenedor ferreteria-postgres se publica en el 5433 (el 5432 es el PostgreSQL local de Windows)
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/db_clientes
+    username: ${DB_USER:ferreteria}
+    password: ${DB_PASSWORD:ferreteria123}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    show-sql: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
