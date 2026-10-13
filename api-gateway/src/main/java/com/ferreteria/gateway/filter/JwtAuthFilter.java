@@ -128,6 +128,26 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             }
             return false; // cualquier otra operación sobre clientes se niega
         }
+        if (pathMatcher.match("/api/productos/*/kardex", path)) {
+            return rolEn(rol, "ADMIN", "ALMACENERO");
+        }
+        if (pathMatcher.match("/api/stock/**", path)) {
+            if (metodo == HttpMethod.GET && pathMatcher.match("/api/stock", path)) {
+                return rolEn(rol, "ADMIN", "ALMACENERO", "VENDEDOR");
+            }
+            return rolEn(rol, "ADMIN", "ALMACENERO");
+        }
+        boolean esCatalogo = pathMatcher.match("/api/productos/**", path)
+                || pathMatcher.match("/api/categorias/**", path);
+        if (esCatalogo || pathMatcher.match("/api/almacenes/**", path)) {
+            if (metodo == HttpMethod.GET) {
+                return true;
+            }
+            if (esCatalogo && (metodo == HttpMethod.POST || metodo == HttpMethod.PUT || metodo == HttpMethod.PATCH)) {
+                return rolEn(rol, "ADMIN");
+            }
+            return false;
+        }
         return true;
     }
 

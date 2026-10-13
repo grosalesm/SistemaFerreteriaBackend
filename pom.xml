@@ -17,6 +17,7 @@
         <module>api-gateway</module>
         <module>ms-auth</module>
         <module>ms-clientes</module>
+        <module>ms-productos</module>
     </modules>
 
     <properties>
@@ -27,6 +28,7 @@
 
         <spring-boot.version>3.3.13</spring-boot.version>
         <spring-cloud.version>2023.0.6</spring-cloud.version>
+        <lombok.version>1.18.38</lombok.version>
 
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
