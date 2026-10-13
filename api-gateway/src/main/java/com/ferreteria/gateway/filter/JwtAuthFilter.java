@@ -72,7 +72,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         }
 
         String rol = claims.get("rol", String.class);
-        if (pathMatcher.match("/api/usuarios/**", path) && !"ADMIN".equals(rol)) {
+        if (!tienePermiso(path, request.getMethod(), rol)) {
             return responder(exchange, HttpStatus.FORBIDDEN, "No tiene permisos para este recurso");
         }
 
@@ -104,6 +104,35 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
             return null;
         }
         return header.substring(7);
+    }
+
+    // Reglas de acceso por rol. Las rutas que no aparecen aquí solo necesitan un token válido.
+    private boolean tienePermiso(String path, HttpMethod metodo, String rol) {
+        if (pathMatcher.match("/api/usuarios/**", path)) {
+            return rolEn(rol, "ADMIN");
+        }
+        if (pathMatcher.match("/api/clientes/me", path)) {
+            return rolEn(rol, "CLIENTE");
+        }
+        if (pathMatcher.match("/api/clientes/**", path)) {
+            if (metodo == HttpMethod.GET) {
+                return rolEn(rol, "ADMIN", "VENDEDOR", "CLIENTE");
+            }
+            if (metodo == HttpMethod.POST || metodo == HttpMethod.PUT) {
+                return rolEn(rol, "ADMIN", "VENDEDOR");
+            }
+            if (metodo == HttpMethod.PATCH
+                    && (pathMatcher.match("/api/clientes/*/tipo", path)
+                        || pathMatcher.match("/api/clientes/*/estado", path))) {
+                return rolEn(rol, "ADMIN");
+            }
+            return false; // cualquier otra operación sobre clientes se niega
+        }
+        return true;
+    }
+
+    private boolean rolEn(String rol, String... permitidos) {
+        return rol != null && List.of(permitidos).contains(rol);
     }
 
     private boolean esPublica(String path) {
