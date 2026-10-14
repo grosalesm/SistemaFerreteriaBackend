@@ -68,8 +68,8 @@ Authorization: Bearer <token>
 ```
 
 - El token es un JWT HS256 que **dura 8 horas**. Al expirar, el gateway responde `401` y hay que volver a hacer login.
-- Claims útiles si se decodifica el token: `sub` (idUsuario), `username`, `rol`, `clienteId` (solo para rol `CLIENTE`, `null` en los demás).
-- El gateway valida el token y el rol, y reenvía al microservicio las cabeceras `X-User-Id`, `X-User-Role` y `X-Cliente-Id`. El frontend **no** debe enviarlas: si las envía, el gateway las descarta.
+- Claims útiles si se decodifica el token: `sub` (idUsuario), `username`, `nombre` (nombre completo del usuario), `rol`, `clienteId` (solo para rol `CLIENTE`, `null` en los demás). Los tokens emitidos antes de este cambio no traen `nombre`: hay que volver a hacer login.
+- El gateway valida el token y el rol, y reenvía al microservicio las cabeceras `X-User-Id`, `X-User-Role`, `X-User-Nombre` (el claim `nombre` codificado en URL, UTF-8, porque lleva tildes) y `X-Cliente-Id`. El frontend **no** debe enviarlas: si las envía, el gateway las descarta.
 - En el WebSocket el token va como query param `?token=` (ver [sección 10](#10-websocket-de-avisos-en-tiempo-real)).
 
 ### POST `/api/auth/registro` — público
@@ -205,7 +205,7 @@ Gestión de usuarios internos. **Todas las rutas `/api/usuarios/**` son solo `AD
 | Método | Ruta | Roles | Descripción |
 |---|---|---|---|
 | GET | `/api/clientes?tipoCliente=&texto=` | ADMIN, VENDEDOR, CLIENTE | Lista / busca clientes |
-| GET | `/api/clientes/{id}` | ADMIN, VENDEDOR, CLIENTE | Obtiene un cliente (CLIENTE solo el suyo, si no `403`) |
+| GET | `/api/clientes/{id}` | ADMIN, VENDEDOR, CAJERO, CLIENTE | Obtiene un cliente (CLIENTE solo el suyo, si no `403`; CAJERO solo esta consulta por id) |
 | POST | `/api/clientes` | ADMIN, VENDEDOR | Crea un cliente |
 | PUT | `/api/clientes/{id}` | ADMIN, VENDEDOR | Edita datos del cliente |
 | PATCH | `/api/clientes/{id}/tipo?tipoCliente=CONTRATISTA` | ADMIN | Cambia el tipo de cliente |
@@ -373,9 +373,12 @@ Response de ingresos / ajustes (`200`) y elementos de `GET /api/stock` y `/api/s
   "idAlmacen": 1,
   "cantidadFisica": 55,
   "cantidadReservada": 12,
-  "disponible": 43
+  "disponible": 43,
+  "productoActivo": true
 }
 ```
+
+`productoActivo` indica si el producto está activo; viene lleno en `GET /api/stock` y `/api/stock/criticos` y es `null` en las respuestas de ingresos / ajustes.
 
 Si tras el movimiento `disponible` ≤ `stockMinimo`, se emite un aviso `stock.critico` (ver sección 10).
 
@@ -507,6 +510,7 @@ Ejemplo para un cliente `MINORISTA`: 12 bolsas de cemento (32.50, 5 % por llevar
       "estadoAnterior": null,
       "estadoNuevo": "BORRADOR",
       "usuarioId": 7,
+      "usuarioNombre": "María Rojas",
       "fecha": "2026-10-13T10:20:11",
       "comentario": "Cotización creada"
     },
@@ -515,6 +519,7 @@ Ejemplo para un cliente `MINORISTA`: 12 bolsas de cemento (32.50, 5 % por llevar
       "estadoAnterior": "BORRADOR",
       "estadoNuevo": "ENVIADA",
       "usuarioId": 7,
+      "usuarioNombre": "María Rojas",
       "fecha": "2026-10-13T10:25:03",
       "comentario": null
     }
@@ -532,6 +537,7 @@ Cálculo de importes:
 Notas:
 
 - En `/simular` la respuesta no tiene `idCotizacion`, `codigo`, `idItem` ni historial.
+- `usuarioNombre` en el historial es el nombre de quien hizo el cambio; es `null` en registros antiguos y en cambios automáticos (vencimiento, conversión a pedido).
 - Un item puede traer `"aviso": "Stock insuficiente en el almacén: disponible 8"` (el campo se omite si no hay aviso). Es solo informativo; al **aprobar**, si falta stock la API responde `409`:
 
 ```json
@@ -667,6 +673,7 @@ Para despachar, todos los items deben estar `preparado: true`. Al despachar se d
   "fechaDespacho": null,
   "fechaEntrega": null,
   "almaceneroId": 4,
+  "almaceneroNombre": "Luis Paredes",
   "motivoAnulacion": null,
   "items": [
     {
@@ -696,6 +703,7 @@ Para despachar, todos los items deben estar `preparado: true`. Al despachar se d
     "monto": 1228.50,
     "numeroOperacion": "00458721",
     "cajeroId": 5,
+    "cajeroNombre": "Ana Quispe",
     "fecha": "2026-10-13T11:02:15",
     "devuelto": false
   },
@@ -717,6 +725,8 @@ Para despachar, todos los items deben estar `preparado: true`. Al despachar se d
 ```
 
 `pago` y `comprobante` son `null` mientras no existan.
+
+`almaceneroNombre` (quien preparó el pedido) y `pago.cajeroNombre` (quien cobró) son `null` en registros antiguos.
 
 ---
 
