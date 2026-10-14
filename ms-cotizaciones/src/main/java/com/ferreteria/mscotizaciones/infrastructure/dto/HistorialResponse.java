@@ -9,6 +9,7 @@ public record HistorialResponse(
         EstadoCotizacion estadoAnterior,
         EstadoCotizacion estadoNuevo,
         Long usuarioId,
+        String usuarioNombre,
         LocalDateTime fecha,
         String comentario) {
 }

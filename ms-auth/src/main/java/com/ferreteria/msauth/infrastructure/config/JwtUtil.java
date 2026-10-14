@@ -29,6 +29,7 @@ public class JwtUtil {
         return Jwts.builder()
                 .subject(String.valueOf(usuario.getIdUsuario()))
                 .claim("username", usuario.getUsername())
+                .claim("nombre", usuario.getNombreCompleto())
                 .claim("rol", usuario.getRol().name())
                 .claim("clienteId", usuario.getClienteId())
                 .issuedAt(ahora)

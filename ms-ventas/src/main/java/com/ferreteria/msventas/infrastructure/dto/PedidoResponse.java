@@ -28,6 +28,7 @@ public record PedidoResponse(
         LocalDateTime fechaDespacho,
         LocalDateTime fechaEntrega,
         Long almaceneroId,
+        String almaceneroNombre,
         String motivoAnulacion,
         List<ItemPedidoResponse> items,
         PagoResponse pago,
@@ -39,6 +40,7 @@ public record PedidoResponse(
             BigDecimal monto,
             String numeroOperacion,
             Long cajeroId,
+            String cajeroNombre,
             LocalDateTime fecha,
             Boolean devuelto) {
     }

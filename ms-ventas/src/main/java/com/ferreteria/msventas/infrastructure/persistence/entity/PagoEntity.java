@@ -45,6 +45,9 @@ public class PagoEntity {
     @Column(name = "cajero_id")
     private Long cajeroId;
 
+    @Column(name = "cajero_nombre", length = 100)
+    private String cajeroNombre;
+
     @Column(name = "fecha", nullable = false)
     private LocalDateTime fecha;
 

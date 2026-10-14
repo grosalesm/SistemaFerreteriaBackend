@@ -1,5 +1,7 @@
 package com.ferreteria.msventas.infrastructure.controller;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -69,9 +71,10 @@ public class PedidoController {
     public ResponseEntity<PedidoResponse> pagar(
             @PathVariable Long id,
             @Valid @RequestBody PagoRequest request,
-            @RequestHeader(value = "X-User-Id", required = false) Long cajeroId) {
+            @RequestHeader(value = "X-User-Id", required = false) Long cajeroId,
+            @RequestHeader(value = "X-User-Nombre", required = false) String cajeroNombre) {
         return pedidoUseCase.registrarPago(id, pedidoWebMapper.toPago(request), request.tipoEntrega(),
-                        request.direccionEntrega(), cajeroId)
+                        request.direccionEntrega(), cajeroId, decodificar(cajeroNombre))
                 .map(p -> ResponseEntity.ok(pedidoWebMapper.toResponse(p)))
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -102,5 +105,9 @@ public class PedidoController {
         return pedidoUseCase.anular(id, request.motivo())
                 .map(p -> ResponseEntity.ok(pedidoWebMapper.toResponse(p)))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    private String decodificar(String valor) {
+        return valor == null ? null : URLDecoder.decode(valor, StandardCharsets.UTF_8);
     }
 }

@@ -69,9 +69,9 @@ public class CotizacionService implements CotizacionUseCase {
 
     @Override
     @Transactional
-    public Cotizacion crear(Cotizacion datos, Long usuarioId, String rol, Long clienteIdToken) {
+    public Cotizacion crear(Cotizacion datos, Long usuarioId, String usuarioNombre, String rol, Long clienteIdToken) {
         Cotizacion cotizacion = armar(datos, usuarioId, rol, clienteIdToken);
-        return guardarBorrador(cotizacion, usuarioId, "Cotización creada");
+        return guardarBorrador(cotizacion, usuarioId, usuarioNombre, "Cotización creada");
     }
 
     @Override
@@ -93,11 +93,11 @@ public class CotizacionService implements CotizacionUseCase {
 
     @Override
     @Transactional
-    public Optional<Cotizacion> enviar(Long idCotizacion, Long usuarioId, String rol, Long clienteIdToken) {
+    public Optional<Cotizacion> enviar(Long idCotizacion, Long usuarioId, String usuarioNombre, String rol, Long clienteIdToken) {
         return obtenerConAcceso(idCotizacion, rol, clienteIdToken).map(cotizacion -> {
             validarEstado(cotizacionConstraints.puedeEnviar(cotizacion), "Solo se puede enviar una cotización en BORRADOR con productos");
             cotizacion.setFechaVencimiento(LocalDateTime.now().plusDays(diasVigencia));
-            cambiarEstado(cotizacion, EstadoCotizacion.ENVIADA, usuarioId, null);
+            cambiarEstado(cotizacion, EstadoCotizacion.ENVIADA, usuarioId, usuarioNombre, null);
             Cotizacion guardada = guardar(cotizacion);
             eventoOutService.publicarCambioEstado(guardada);
             return guardada;
@@ -106,7 +106,7 @@ public class CotizacionService implements CotizacionUseCase {
 
     @Override
     @Transactional
-    public Optional<Cotizacion> aprobar(Long idCotizacion, Long usuarioId, String rol, Long clienteIdToken) {
+    public Optional<Cotizacion> aprobar(Long idCotizacion, Long usuarioId, String usuarioNombre, String rol, Long clienteIdToken) {
         return obtenerConAcceso(idCotizacion, rol, clienteIdToken).map(cotizacion -> {
             validarEstado(cotizacionConstraints.puedeAprobar(cotizacion), "Solo se puede aprobar una cotización ENVIADA y vigente");
             obtenerClienteActivo(cotizacion.getClienteId());
@@ -117,7 +117,7 @@ public class CotizacionService implements CotizacionUseCase {
             productoClient.reservar(new ReservaRequest(cotizacion.getIdCotizacion(), cotizacion.getIdAlmacen(), items));
 
             cotizacion.setFechaAprobacion(LocalDateTime.now());
-            cambiarEstado(cotizacion, EstadoCotizacion.APROBADA, usuarioId, null);
+            cambiarEstado(cotizacion, EstadoCotizacion.APROBADA, usuarioId, usuarioNombre, null);
             Cotizacion guardada;
             try {
                 guardada = guardar(cotizacion);
@@ -132,14 +132,14 @@ public class CotizacionService implements CotizacionUseCase {
 
     @Override
     @Transactional
-    public Optional<Cotizacion> rechazar(Long idCotizacion, String motivo, Long usuarioId, String rol, Long clienteIdToken) {
+    public Optional<Cotizacion> rechazar(Long idCotizacion, String motivo, Long usuarioId, String usuarioNombre, String rol, Long clienteIdToken) {
         if (motivo == null || motivo.isBlank()) {
             throw new IllegalArgumentException("El motivo de rechazo es obligatorio");
         }
         return obtenerConAcceso(idCotizacion, rol, clienteIdToken).map(cotizacion -> {
             validarEstado(cotizacionConstraints.puedeRechazar(cotizacion), "Solo se puede rechazar una cotización ENVIADA");
             cotizacion.setMotivoRechazo(motivo.trim());
-            cambiarEstado(cotizacion, EstadoCotizacion.RECHAZADA, usuarioId, motivo.trim());
+            cambiarEstado(cotizacion, EstadoCotizacion.RECHAZADA, usuarioId, usuarioNombre, motivo.trim());
             Cotizacion guardada = guardar(cotizacion);
             eventoOutService.publicarCambioEstado(guardada);
             return guardada;
@@ -148,18 +148,18 @@ public class CotizacionService implements CotizacionUseCase {
 
     @Override
     @Transactional
-    public Optional<Cotizacion> reenviar(Long idCotizacion, Long usuarioId, String rol, Long clienteIdToken) {
+    public Optional<Cotizacion> reenviar(Long idCotizacion, Long usuarioId, String usuarioNombre, String rol, Long clienteIdToken) {
         return obtenerConAcceso(idCotizacion, rol, clienteIdToken).map(origen -> {
             validarEstado(cotizacionConstraints.puedeReenviar(origen), "Solo se puede reenviar una cotización VENCIDA o RECHAZADA");
-            return copiar(origen, usuarioId, rol, clienteIdToken, "Reenvío de " + origen.getCodigo());
+            return copiar(origen, usuarioId, usuarioNombre, rol, clienteIdToken, "Reenvío de " + origen.getCodigo());
         });
     }
 
     @Override
     @Transactional
-    public Optional<Cotizacion> duplicar(Long idCotizacion, Long usuarioId, String rol, Long clienteIdToken) {
+    public Optional<Cotizacion> duplicar(Long idCotizacion, Long usuarioId, String usuarioNombre, String rol, Long clienteIdToken) {
         return obtenerConAcceso(idCotizacion, rol, clienteIdToken)
-                .map(origen -> copiar(origen, usuarioId, rol, clienteIdToken, "Duplicado de " + origen.getCodigo()));
+                .map(origen -> copiar(origen, usuarioId, usuarioNombre, rol, clienteIdToken, "Duplicado de " + origen.getCodigo()));
     }
 
     @Override
@@ -167,7 +167,7 @@ public class CotizacionService implements CotizacionUseCase {
     public int vencerCotizaciones() {
         List<Cotizacion> vencidas = cotizacionOutService.listarEnviadasVencidas(LocalDateTime.now());
         for (Cotizacion cotizacion : vencidas) {
-            cambiarEstado(cotizacion, EstadoCotizacion.VENCIDA, null, "Vencida automáticamente");
+            cambiarEstado(cotizacion, EstadoCotizacion.VENCIDA, null, null, "Vencida automáticamente");
             eventoOutService.publicarCambioEstado(guardar(cotizacion));
         }
         return vencidas.size();
@@ -180,7 +180,7 @@ public class CotizacionService implements CotizacionUseCase {
         if (cotizacion == null || cotizacion.getEstado() != EstadoCotizacion.APROBADA) {
             return false;
         }
-        cambiarEstado(cotizacion, EstadoCotizacion.CONVERTIDA, null, "Convertida en el pedido " + pedidoId);
+        cambiarEstado(cotizacion, EstadoCotizacion.CONVERTIDA, null, null, "Convertida en el pedido " + pedidoId);
         guardar(cotizacion);
         return true;
     }
@@ -215,7 +215,7 @@ public class CotizacionService implements CotizacionUseCase {
         return cotizacion;
     }
 
-    private Cotizacion copiar(Cotizacion origen, Long usuarioId, String rol, Long clienteIdToken, String comentario) {
+    private Cotizacion copiar(Cotizacion origen, Long usuarioId, String usuarioNombre, String rol, Long clienteIdToken, String comentario) {
         Cotizacion datos = new Cotizacion();
         datos.setClienteId(origen.getClienteId());
         datos.setIdAlmacen(origen.getIdAlmacen());
@@ -224,7 +224,7 @@ public class CotizacionService implements CotizacionUseCase {
                 .collect(Collectors.toList()));
         Cotizacion nueva = armar(datos, usuarioId, rol, clienteIdToken);
         nueva.setCotizacionOrigenId(origen.getIdCotizacion());
-        return guardarBorrador(nueva, usuarioId, comentario);
+        return guardarBorrador(nueva, usuarioId, usuarioNombre, comentario);
     }
 
     private void asignarCliente(Cotizacion cotizacion) {
@@ -266,14 +266,14 @@ public class CotizacionService implements CotizacionUseCase {
         cotizacionConstraints.calcularTotales(cotizacion);
     }
 
-    private Cotizacion guardarBorrador(Cotizacion cotizacion, Long usuarioId, String comentario) {
+    private Cotizacion guardarBorrador(Cotizacion cotizacion, Long usuarioId, String usuarioNombre, String comentario) {
         cotizacion.setFechaCreacion(LocalDateTime.now());
-        cambiarEstado(cotizacion, EstadoCotizacion.BORRADOR, usuarioId, comentario);
+        cambiarEstado(cotizacion, EstadoCotizacion.BORRADOR, usuarioId, usuarioNombre, comentario);
         return guardar(cotizacion);
     }
 
-    private void cambiarEstado(Cotizacion cotizacion, EstadoCotizacion nuevoEstado, Long usuarioId, String comentario) {
-        cotizacion.getHistorial().add(new HistorialEstado(null, cotizacion.getEstado(), nuevoEstado, usuarioId,
+    private void cambiarEstado(Cotizacion cotizacion, EstadoCotizacion nuevoEstado, Long usuarioId, String usuarioNombre, String comentario) {
+        cotizacion.getHistorial().add(new HistorialEstado(null, cotizacion.getEstado(), nuevoEstado, usuarioId, usuarioNombre,
                 LocalDateTime.now(), comentario));
         cotizacion.setEstado(nuevoEstado);
     }

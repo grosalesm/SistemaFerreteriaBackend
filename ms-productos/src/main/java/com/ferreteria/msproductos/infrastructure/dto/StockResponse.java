@@ -6,5 +6,6 @@ public record StockResponse(
         Long idAlmacen,
         Integer cantidadFisica,
         Integer cantidadReservada,
-        Integer disponible) {
+        Integer disponible,
+        Boolean productoActivo) {
 }

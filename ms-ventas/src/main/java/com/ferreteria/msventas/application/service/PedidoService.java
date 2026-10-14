@@ -101,7 +101,7 @@ public class PedidoService implements PedidoUseCase {
     @Override
     @Transactional
     public Optional<Pedido> registrarPago(Long idPedido, Pago pago, TipoEntrega tipoEntrega, String direccionEntrega,
-                                          Long cajeroId) {
+                                          Long cajeroId, String cajeroNombre) {
         return pedidoOutService.obtenerPorId(idPedido).map(pedido -> {
             validarEstado(pedidoConstraints.puedePagar(pedido), "Solo se puede pagar un pedido en PENDIENTE_PAGO");
             validarEstado(pedidoConstraints.montoValido(pedido, pago.getMonto()),
@@ -116,6 +116,7 @@ public class PedidoService implements PedidoUseCase {
             pago.setIdPago(null);
             pago.setIdPedido(idPedido);
             pago.setCajeroId(cajeroId);
+            pago.setCajeroNombre(cajeroNombre);
             pago.setFecha(ahora);
             pago.setDevuelto(false);
             pedidoOutService.guardarPago(pago);
@@ -157,10 +158,11 @@ public class PedidoService implements PedidoUseCase {
 
     @Override
     @Transactional
-    public Optional<Pedido> preparar(Long idPedido, Long almaceneroId) {
+    public Optional<Pedido> preparar(Long idPedido, Long almaceneroId, String almaceneroNombre) {
         return pedidoOutService.obtenerPorId(idPedido).map(pedido -> {
             validarEstado(pedidoConstraints.puedePreparar(pedido), "Solo se puede preparar un pedido PAGADO");
             pedido.setAlmaceneroId(almaceneroId);
+            pedido.setAlmaceneroNombre(almaceneroNombre);
             pedido.setFechaPreparacion(LocalDateTime.now());
             pedido.setEstado(EstadoPedido.EN_PREPARACION);
             return guardarYPublicar(pedido);

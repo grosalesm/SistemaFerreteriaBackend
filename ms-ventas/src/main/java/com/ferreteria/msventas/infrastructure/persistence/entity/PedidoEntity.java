@@ -92,6 +92,9 @@ public class PedidoEntity {
     @Column(name = "almacenero_id")
     private Long almaceneroId;
 
+    @Column(name = "almacenero_nombre", length = 100)
+    private String almaceneroNombre;
+
     @Column(name = "motivo_anulacion", length = 300)
     private String motivoAnulacion;
 

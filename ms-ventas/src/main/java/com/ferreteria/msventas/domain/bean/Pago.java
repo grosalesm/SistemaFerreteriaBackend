@@ -19,6 +19,7 @@ public class Pago implements Serializable {
     private BigDecimal monto;
     private String numeroOperacion;
     private Long cajeroId;
+    private String cajeroNombre;
     private LocalDateTime fecha;
     private Boolean devuelto;
 }
