@@ -1,5 +1,6 @@
 package com.ferreteria.gateway.filter;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -48,6 +49,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
                 .headers(h -> {
                     h.remove("X-User-Id");
                     h.remove("X-User-Role");
+                    h.remove("X-User-Nombre");
                     h.remove("X-Cliente-Id");
                 })
                 .build();
@@ -77,12 +79,16 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         }
 
         Object clienteId = claims.get("clienteId");
+        String nombre = claims.get("nombre", String.class);
         ServerHttpRequest requestConUsuario = request.mutate()
                 .headers(h -> {
                     h.set("X-User-Id", claims.getSubject());
                     h.set("X-User-Role", rol);
                     if (clienteId != null) {
                         h.set("X-Cliente-Id", clienteId.toString());
+                    }
+                    if (nombre != null) {
+                        h.set("X-User-Nombre", URLEncoder.encode(nombre, StandardCharsets.UTF_8));
                     }
                 })
                 .build();
@@ -116,6 +122,9 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         }
         if (pathMatcher.match("/api/clientes/**", path)) {
             if (metodo == HttpMethod.GET) {
+                if (pathMatcher.match("/api/clientes/{id:\\d+}", path)) {
+                    return rolEn(rol, "ADMIN", "VENDEDOR", "CLIENTE", "CAJERO");
+                }
                 return rolEn(rol, "ADMIN", "VENDEDOR", "CLIENTE");
             }
             if (metodo == HttpMethod.POST || metodo == HttpMethod.PUT) {

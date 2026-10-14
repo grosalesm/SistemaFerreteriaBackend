@@ -1,5 +1,7 @@
 package com.ferreteria.mscotizaciones.infrastructure.controller;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -61,9 +63,10 @@ public class CotizacionController {
     public ResponseEntity<CotizacionResponse> crear(
             @Valid @RequestBody CotizacionRequest request,
             @RequestHeader(value = "X-User-Id", required = false) Long usuarioId,
+            @RequestHeader(value = "X-User-Nombre", required = false) String usuarioNombre,
             @RequestHeader(value = "X-User-Role", required = false) String rol,
             @RequestHeader(value = "X-Cliente-Id", required = false) Long clienteIdToken) {
-        Cotizacion creada = cotizacionUseCase.crear(cotizacionWebMapper.toBean(request), usuarioId, rol, clienteIdToken);
+        Cotizacion creada = cotizacionUseCase.crear(cotizacionWebMapper.toBean(request), usuarioId, decodificar(usuarioNombre), rol, clienteIdToken);
         return ResponseEntity.status(HttpStatus.CREATED).body(cotizacionWebMapper.toResponse(creada));
     }
 
@@ -90,18 +93,20 @@ public class CotizacionController {
     public ResponseEntity<CotizacionResponse> enviar(
             @PathVariable Long id,
             @RequestHeader(value = "X-User-Id", required = false) Long usuarioId,
+            @RequestHeader(value = "X-User-Nombre", required = false) String usuarioNombre,
             @RequestHeader(value = "X-User-Role", required = false) String rol,
             @RequestHeader(value = "X-Cliente-Id", required = false) Long clienteIdToken) {
-        return responder(cotizacionUseCase.enviar(id, usuarioId, rol, clienteIdToken));
+        return responder(cotizacionUseCase.enviar(id, usuarioId, decodificar(usuarioNombre), rol, clienteIdToken));
     }
 
     @PostMapping("/{id}/aprobar")
     public ResponseEntity<CotizacionResponse> aprobar(
             @PathVariable Long id,
             @RequestHeader(value = "X-User-Id", required = false) Long usuarioId,
+            @RequestHeader(value = "X-User-Nombre", required = false) String usuarioNombre,
             @RequestHeader(value = "X-User-Role", required = false) String rol,
             @RequestHeader(value = "X-Cliente-Id", required = false) Long clienteIdToken) {
-        return responder(cotizacionUseCase.aprobar(id, usuarioId, rol, clienteIdToken));
+        return responder(cotizacionUseCase.aprobar(id, usuarioId, decodificar(usuarioNombre), rol, clienteIdToken));
     }
 
     @PostMapping("/{id}/rechazar")
@@ -109,27 +114,34 @@ public class CotizacionController {
             @PathVariable Long id,
             @Valid @RequestBody RechazoRequest request,
             @RequestHeader(value = "X-User-Id", required = false) Long usuarioId,
+            @RequestHeader(value = "X-User-Nombre", required = false) String usuarioNombre,
             @RequestHeader(value = "X-User-Role", required = false) String rol,
             @RequestHeader(value = "X-Cliente-Id", required = false) Long clienteIdToken) {
-        return responder(cotizacionUseCase.rechazar(id, request.motivo(), usuarioId, rol, clienteIdToken));
+        return responder(cotizacionUseCase.rechazar(id, request.motivo(), usuarioId, decodificar(usuarioNombre), rol, clienteIdToken));
     }
 
     @PostMapping("/{id}/reenviar")
     public ResponseEntity<CotizacionResponse> reenviar(
             @PathVariable Long id,
             @RequestHeader(value = "X-User-Id", required = false) Long usuarioId,
+            @RequestHeader(value = "X-User-Nombre", required = false) String usuarioNombre,
             @RequestHeader(value = "X-User-Role", required = false) String rol,
             @RequestHeader(value = "X-Cliente-Id", required = false) Long clienteIdToken) {
-        return responderCreada(cotizacionUseCase.reenviar(id, usuarioId, rol, clienteIdToken));
+        return responderCreada(cotizacionUseCase.reenviar(id, usuarioId, decodificar(usuarioNombre), rol, clienteIdToken));
     }
 
     @PostMapping("/{id}/duplicar")
     public ResponseEntity<CotizacionResponse> duplicar(
             @PathVariable Long id,
             @RequestHeader(value = "X-User-Id", required = false) Long usuarioId,
+            @RequestHeader(value = "X-User-Nombre", required = false) String usuarioNombre,
             @RequestHeader(value = "X-User-Role", required = false) String rol,
             @RequestHeader(value = "X-Cliente-Id", required = false) Long clienteIdToken) {
-        return responderCreada(cotizacionUseCase.duplicar(id, usuarioId, rol, clienteIdToken));
+        return responderCreada(cotizacionUseCase.duplicar(id, usuarioId, decodificar(usuarioNombre), rol, clienteIdToken));
+    }
+
+    private String decodificar(String valor) {
+        return valor == null ? null : URLDecoder.decode(valor, StandardCharsets.UTF_8);
     }
 
     private ResponseEntity<CotizacionResponse> responder(Optional<Cotizacion> cotizacion) {

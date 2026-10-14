@@ -16,6 +16,7 @@ public class HistorialEstado implements Serializable {
     private EstadoCotizacion estadoAnterior;
     private EstadoCotizacion estadoNuevo;
     private Long usuarioId;
+    private String usuarioNombre;
     private LocalDateTime fecha;
     private String comentario;
 }

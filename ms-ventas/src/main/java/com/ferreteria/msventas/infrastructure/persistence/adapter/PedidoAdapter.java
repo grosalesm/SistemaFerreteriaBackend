@@ -82,6 +82,7 @@ public class PedidoAdapter implements PedidoOutService {
                     entity.setFechaDespacho(pedido.getFechaDespacho());
                     entity.setFechaEntrega(pedido.getFechaEntrega());
                     entity.setAlmaceneroId(pedido.getAlmaceneroId());
+                    entity.setAlmaceneroNombre(pedido.getAlmaceneroNombre());
                     entity.setMotivoAnulacion(pedido.getMotivoAnulacion());
                     Map<Long, ItemPedido> items = pedido.getItems().stream()
                             .collect(Collectors.toMap(ItemPedido::getIdItem, Function.identity()));

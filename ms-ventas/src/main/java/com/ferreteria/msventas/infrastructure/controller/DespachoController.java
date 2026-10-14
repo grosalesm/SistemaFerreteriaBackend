@@ -1,5 +1,7 @@
 package com.ferreteria.msventas.infrastructure.controller;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,8 +39,9 @@ public class DespachoController {
     @PostMapping("/api/pedidos/{id}/preparar")
     public ResponseEntity<PedidoResponse> preparar(
             @PathVariable Long id,
-            @RequestHeader(value = "X-User-Id", required = false) Long almaceneroId) {
-        return responder(pedidoUseCase.preparar(id, almaceneroId));
+            @RequestHeader(value = "X-User-Id", required = false) Long almaceneroId,
+            @RequestHeader(value = "X-User-Nombre", required = false) String almaceneroNombre) {
+        return responder(pedidoUseCase.preparar(id, almaceneroId, decodificar(almaceneroNombre)));
     }
 
     @PutMapping("/api/pedidos/{id}/checklist")
@@ -64,5 +67,9 @@ public class DespachoController {
         return pedido
                 .map(p -> ResponseEntity.ok(pedidoWebMapper.toResponse(p)))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    private String decodificar(String valor) {
+        return valor == null ? null : URLDecoder.decode(valor, StandardCharsets.UTF_8);
     }
 }

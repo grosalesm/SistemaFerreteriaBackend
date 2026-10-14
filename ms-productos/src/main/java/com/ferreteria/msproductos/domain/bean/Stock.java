@@ -16,6 +16,7 @@ public class Stock implements Serializable {
     private Long idAlmacen;
     private Integer cantidadFisica;
     private Integer cantidadReservada;
+    private Boolean productoActivo;
 
     public int disponible() {
         return cantidadFisica - cantidadReservada;

@@ -39,6 +39,9 @@ public class HistorialEstadoEntity {
     @Column(name = "usuario_id")
     private Long usuarioId;
 
+    @Column(name = "usuario_nombre", length = 100)
+    private String usuarioNombre;
+
     @Column(name = "fecha", nullable = false)
     private LocalDateTime fecha;
 

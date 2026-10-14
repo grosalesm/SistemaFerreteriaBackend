@@ -41,7 +41,11 @@ public class StockService implements StockUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<Stock> listar(Long idAlmacen) {
-        return stockOutService.listar(idAlmacen);
+        Map<Long, Boolean> activos = productoOutService.listar(null, "").stream()
+                .collect(Collectors.toMap(Producto::getIdProducto, p -> Boolean.TRUE.equals(p.getActivo())));
+        List<Stock> stocks = stockOutService.listar(idAlmacen);
+        stocks.forEach(s -> s.setProductoActivo(activos.getOrDefault(s.getIdProducto(), false)));
+        return stocks;
     }
 
     @Override
@@ -62,6 +66,7 @@ public class StockService implements StockUseCase {
                             && Boolean.TRUE.equals(producto.getActivo())
                             && stockConstraints.esCritico(stock, producto.getStockMinimo());
                 })
+                .peek(stock -> stock.setProductoActivo(true))
                 .toList();
     }
 

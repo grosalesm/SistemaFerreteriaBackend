@@ -34,6 +34,7 @@ public class Pedido implements Serializable {
     private LocalDateTime fechaDespacho;
     private LocalDateTime fechaEntrega;
     private Long almaceneroId;
+    private String almaceneroNombre;
     private String motivoAnulacion;
     private List<ItemPedido> items = new ArrayList<>();
     private Pago pago;

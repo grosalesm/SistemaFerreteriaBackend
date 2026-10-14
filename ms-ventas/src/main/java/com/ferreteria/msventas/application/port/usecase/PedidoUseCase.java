@@ -18,9 +18,9 @@ public interface PedidoUseCase {
     Optional<Pedido> obtenerPorId(Long idPedido, String rol, Long clienteIdToken);
     Optional<Comprobante> obtenerComprobante(Long idPedido, String rol, Long clienteIdToken);
     boolean crearDesdeCotizacion(Pedido datos);
-    Optional<Pedido> registrarPago(Long idPedido, Pago pago, TipoEntrega tipoEntrega, String direccionEntrega, Long cajeroId);
+    Optional<Pedido> registrarPago(Long idPedido, Pago pago, TipoEntrega tipoEntrega, String direccionEntrega, Long cajeroId, String cajeroNombre);
     Optional<Comprobante> emitirComprobante(Long idPedido, Comprobante datos);
-    Optional<Pedido> preparar(Long idPedido, Long almaceneroId);
+    Optional<Pedido> preparar(Long idPedido, Long almaceneroId, String almaceneroNombre);
     Optional<Pedido> marcarChecklist(Long idPedido, List<Long> itemsPreparados);
     Optional<Pedido> despachar(Long idPedido, String repartidor);
     Optional<Pedido> entregar(Long idPedido);
