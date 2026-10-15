@@ -29,11 +29,24 @@ Todas las llamadas pasan por el **API Gateway** en `http://localhost:8080`. Nunc
 
 | Rol | Uso |
 |---|---|
-| `ADMIN` | Administra todo. Usuario inicial: `admin` / `Admin123`. |
+| `ADMIN` | Administra todo. Usuario de demo: `admin` / `admin123`. |
 | `VENDEDOR` | Atiende clientes y arma cotizaciones (canal `WEB`). |
 | `CAJERO` | Cobra pedidos y emite comprobantes. |
 | `ALMACENERO` | Gestiona stock, prepara y despacha pedidos. |
 | `CLIENTE` | Se registra solo (app Android), cotiza y ve **solo lo suyo**. |
+
+### Usuarios de demo
+
+Los crean los `DataInitializer` al arrancar con la base vacía (ver `docker/reiniciar-bd.bat`). La contraseña es el usuario + `123`.
+
+| Usuario | Contraseña | Rol | Email |
+|---|---|---|---|
+| `admin` | `admin123` | ADMIN | admin@ferreteria.com |
+| `vendedor` | `vendedor123` | VENDEDOR | vendedor@ferreteria.com |
+| `cajero` | `cajero123` | CAJERO | cajero@ferreteria.com |
+| `almacenero` | `almacenero123` | ALMACENERO | almacenero@ferreteria.com |
+| `usuario` | `usuario123` | CLIENTE (minorista, clienteId 1) | usuario@email.com |
+| `contratista` | `contratista123` | CLIENTE (contratista, clienteId 2) | contratista@email.com |
 
 ### POST `/api/auth/login` — público
 
@@ -42,7 +55,7 @@ Request:
 ```json
 {
   "username": "admin",
-  "password": "Admin123"
+  "password": "admin123"
 }
 ```
 
