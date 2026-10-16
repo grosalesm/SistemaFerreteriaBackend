@@ -19,16 +19,28 @@ public class ClienteClientFallback implements FallbackFactory<ClienteClient> {
     @Override
     public ClienteClient create(Throwable causa) {
         // En ambos casos se lanza una excepción para que el registro se cancele y no se cree el usuario
-        return request -> {
-            FeignException feignException = buscarFeignException(causa);
-            if (feignException != null && feignException.status() >= 400 && feignException.status() < 500) {
-                // Error del usuario (400, 409 documento duplicado...): se devuelve tal cual
-                throw new ResponseStatusException(HttpStatus.valueOf(feignException.status()),
-                        leerMensaje(feignException));
+        return new ClienteClient() {
+            @Override
+            public ClienteResponse crearCliente(ClienteRequest request) {
+                throw convertir(causa);
             }
-            // Timeout, conexión rechazada o circuit breaker abierto
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Servicio de clientes no disponible");
+
+            @Override
+            public ClienteResponse obtenerPorDocumento(String numeroDocumento) {
+                throw convertir(causa);
+            }
         };
+    }
+
+    private ResponseStatusException convertir(Throwable causa) {
+        FeignException feignException = buscarFeignException(causa);
+        if (feignException != null && feignException.status() >= 400 && feignException.status() < 500) {
+            // Error del usuario (400, 409 documento duplicado...): se devuelve tal cual
+            return new ResponseStatusException(HttpStatus.valueOf(feignException.status()),
+                    leerMensaje(feignException));
+        }
+        // Timeout, conexión rechazada o circuit breaker abierto
+        return new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Servicio de clientes no disponible");
     }
 
     private FeignException buscarFeignException(Throwable causa) {

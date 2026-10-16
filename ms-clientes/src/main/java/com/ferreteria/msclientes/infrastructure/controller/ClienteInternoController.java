@@ -39,4 +39,11 @@ public class ClienteInternoController {
                 .map(cliente -> ResponseEntity.ok(clienteWebMapper.toResumen(cliente)))
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/documento/{numeroDocumento}")
+    public ResponseEntity<ClienteResumenResponse> porDocumento(@PathVariable String numeroDocumento) {
+        return clienteUseCase.obtenerPorNumeroDocumento(numeroDocumento)
+                .map(cliente -> ResponseEntity.ok(clienteWebMapper.toResumen(cliente)))
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

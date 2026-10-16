@@ -39,6 +39,12 @@ public class ClienteService implements ClienteUseCase {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<Cliente> obtenerPorNumeroDocumento(String numeroDocumento) {
+        return clienteOutService.obtenerPorNumeroDocumento(numeroDocumento);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<Cliente> obtenerPorId(Long idCliente, String rol, Long clienteIdToken) {
         if (!clienteConstraints.puedeAcceder(idCliente, rol, clienteIdToken)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tiene acceso a este cliente");

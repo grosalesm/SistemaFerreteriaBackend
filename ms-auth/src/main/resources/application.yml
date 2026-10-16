@@ -37,7 +37,7 @@ resilience4j:
     configs:
       default:
         # Por defecto es 1 s; la primera llamada a ms-clientes puede tardar más
-        timeout-duration: 5s
+        timeout-duration: 10s
 
 jwt:
   # Debe ser la MISMA clave en api-gateway (mínimo 32 caracteres para HS256)

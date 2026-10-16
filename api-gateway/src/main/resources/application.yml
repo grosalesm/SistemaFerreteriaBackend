@@ -8,7 +8,7 @@ spring:
     gateway:
       httpclient:
         connect-timeout: 2000
-        response-timeout: 10s
+        response-timeout: 15s
       default-filters:
         # Evita cabeceras CORS duplicadas si algún microservicio también las agrega
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
@@ -94,7 +94,7 @@ spring:
                 name: msNotificacionesCB
                 fallbackUri: forward:/fallback/ms-notificaciones
 
-        # WebSocket: conexión de larga duración, sin CircuitBreaker (el timeout de 10 s la cortaría)
+        # WebSocket: conexión de larga duración, sin CircuitBreaker (el timeout de 15 s la cortaría)
         - id: ms-notificaciones-ws
           uri: lb:ws://ms-notificaciones
           predicates:
@@ -128,7 +128,7 @@ resilience4j:
   timelimiter:
     configs:
       default:
-        timeout-duration: 10s
+        timeout-duration: 15s
         cancel-running-future: true
     instances:
       msAuthCB: { base-config: default }
