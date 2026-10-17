@@ -42,6 +42,11 @@ public class UsuarioAdapter implements UsuarioOutService {
     }
 
     @Override
+    public Optional<Usuario> obtenerPorClienteId(Long clienteId) {
+        return usuarioRepository.findByClienteId(clienteId).map(usuarioMapper::toBean);
+    }
+
+    @Override
     public Usuario insertar(Usuario usuario) {
         UsuarioEntity entity = usuarioMapper.toEntity(usuario);
         entity.setIdUsuario(null);

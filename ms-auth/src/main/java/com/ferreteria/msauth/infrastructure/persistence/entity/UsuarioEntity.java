@@ -44,7 +44,7 @@ public class UsuarioEntity {
     @Column(name = "rol", nullable = false, length = 20)
     private Rol rol;
 
-    @Column(name = "cliente_id")
+    @Column(name = "cliente_id", unique = true)
     private Long clienteId;
 
     @Column(name = "activo", nullable = false)

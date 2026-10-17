@@ -12,7 +12,6 @@ import com.ferreteria.msauth.domain.bean.Usuario;
 import com.ferreteria.msauth.domain.constraint.UsuarioConstraints;
 import com.ferreteria.msauth.infrastructure.client.ClienteClient;
 import com.ferreteria.msauth.infrastructure.client.ClienteClient.ClienteRequest;
-import com.ferreteria.msauth.infrastructure.client.ClienteClient.ClienteResponse;
 import com.ferreteria.msauth.infrastructure.config.JwtUtil;
 import com.ferreteria.msauth.infrastructure.dto.LoginRequest;
 import com.ferreteria.msauth.infrastructure.dto.LoginResponse;
@@ -65,14 +64,25 @@ public class AuthService implements AuthUseCase {
         }
 
         // Si ms-clientes no responde, el fallback lanza 503 y el usuario no se crea
-        ClienteResponse cliente = clienteClient.crearCliente(new ClienteRequest(
-                request.tipoDocumento(),
-                request.numeroDocumento(),
-                request.nombreCompleto(),
-                request.telefono(),
-                request.email()));
+        Long clienteId;
+        try {
+            clienteId = clienteClient.crearCliente(new ClienteRequest(
+                    request.tipoDocumento(),
+                    request.numeroDocumento(),
+                    request.nombreCompleto(),
+                    request.telefono(),
+                    request.email())).id();
+        } catch (ResponseStatusException e) {
+            if (e.getStatusCode() != HttpStatus.CONFLICT) {
+                throw e;
+            }
+            clienteId = clienteClient.obtenerPorDocumento(request.numeroDocumento()).id();
+            if (usuarioOutService.obtenerPorClienteId(clienteId).isPresent()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Este documento ya tiene una cuenta");
+            }
+        }
 
-        usuario.setClienteId(cliente.id());
+        usuario.setClienteId(clienteId);
         usuario.setPassword(passwordEncoder.encode(request.password()));
         return usuarioOutService.insertar(usuario);
     }

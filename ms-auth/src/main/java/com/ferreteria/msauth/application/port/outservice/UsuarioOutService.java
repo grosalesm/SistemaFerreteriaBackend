@@ -15,6 +15,8 @@ public interface UsuarioOutService {
 
     Optional<Usuario> obtenerPorEmail(String email);
 
+    Optional<Usuario> obtenerPorClienteId(Long clienteId);
+
     Usuario insertar(Usuario usuario);
 
     Optional<Usuario> actualizar(Long idUsuario, Usuario usuario);

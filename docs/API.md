@@ -29,11 +29,26 @@ Todas las llamadas pasan por el **API Gateway** en `http://localhost:8080`. Nunc
 
 | Rol | Uso |
 |---|---|
-| `ADMIN` | Administra todo. Usuario inicial: `admin` / `Admin123`. |
+| `ADMIN` | Administra todo. Usuario inicial: `admin` / `admin123` (con los datos demo de Docker). |
 | `VENDEDOR` | Atiende clientes y arma cotizaciones (canal `WEB`). |
 | `CAJERO` | Cobra pedidos y emite comprobantes. |
 | `ALMACENERO` | Gestiona stock, prepara y despacha pedidos. |
 | `CLIENTE` | Se registra solo (app Android), cotiza y ve **solo lo suyo**. |
+
+### Datos demo
+
+Al crear el volumen de PostgreSQL (`docker compose up -d` por primera vez, o tras `docker compose down -v`), `docker/postgres/01-init.sql` crea las bases y `docker/postgres/02-datos.sql` carga datos de prueba: 13 clientes, 8 categorías, 32 productos con stock en ambos almacenes (2 en stock crítico) y sin cotizaciones ni pedidos.
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `admin` | `admin123` | `ADMIN` |
+| `vendedor` | `vendedor123` | `VENDEDOR` |
+| `cajero` | `cajero123` | `CAJERO` |
+| `almacenero` | `almacenero123` | `ALMACENERO` |
+| `usuario` | `usuario123` | `CLIENTE` (minorista, DNI) |
+| `contratista` | `contratista123` | `CLIENTE` (contratista, RUC) |
+
+Si la base se crea vacía (sin `02-datos.sql`), el sistema crea `admin` / `Admin123`.
 
 ### POST `/api/auth/login` — público
 
@@ -42,7 +57,7 @@ Request:
 ```json
 {
   "username": "admin",
-  "password": "Admin123"
+  "password": "admin123"
 }
 ```
 
@@ -380,7 +395,7 @@ Response de ingresos / ajustes (`200`) y elementos de `GET /api/stock` y `/api/s
 
 `productoActivo` indica si el producto está activo; viene lleno en `GET /api/stock` y `/api/stock/criticos` y es `null` en las respuestas de ingresos / ajustes.
 
-Si tras el movimiento `disponible` ≤ `stockMinimo`, se emite un aviso `stock.critico` (ver sección 10).
+Si tras un ajuste (o una reserva de stock) `disponible` ≤ `stockMinimo`, se emite un aviso `stock.critico` (ver sección 10). Los ingresos no emiten aviso.
 
 ### Kardex — GET `/api/productos/{id}/kardex`
 
